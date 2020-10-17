@@ -74,7 +74,7 @@
 				<artifactId>flyway-maven-plugin</artifactId>
 				<version>6.5.6</version>
 				<configuration>
-					<url>jdbc:mysql://192.168.10.10:3306/springboot_demo?characterEncoding=utf8mb4-8</url>
+					<url>jdbc:mysql://192.168.10.10:3306/springboot_demo?characterEncoding=utf-8</url>
 					<user>homestead</user>
 					<password>secret</password>
 				</configuration>
