@@ -21,15 +21,12 @@ import java.util.Map;
 @Controller
 public class AuthController {
 
-    private UserDetailsService userDetailsService;
     private AuthenticationManager authenticationManager;
     private UserService userService;
 
     @Inject
-    public AuthController(UserDetailsService userDetailsService,
-                          AuthenticationManager authenticationManager,
+    public AuthController(AuthenticationManager authenticationManager,
                           UserService userService) {
-        this.userDetailsService = userDetailsService;
         this.authenticationManager = authenticationManager;
         this.userService = userService;
     }
@@ -90,7 +87,7 @@ public class AuthController {
 
         UserDetails userDetails;
         try {
-             userDetails = userDetailsService.loadUserByUsername(username);
+             userDetails = userService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
             return new Result("fail", "用户名不存在", false);
         }
