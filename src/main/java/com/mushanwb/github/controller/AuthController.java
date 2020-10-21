@@ -1,6 +1,7 @@
 package com.mushanwb.github.controller;
 
 import com.mushanwb.github.entity.User;
+import com.mushanwb.github.service.UserService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,17 +23,28 @@ public class AuthController {
 
     private UserDetailsService userDetailsService;
     private AuthenticationManager authenticationManager;
+    private UserService userService;
 
     @Inject
-    public AuthController(UserDetailsService userDetailsService, AuthenticationManager authenticationManager) {
+    public AuthController(UserDetailsService userDetailsService,
+                          AuthenticationManager authenticationManager,
+                          UserService userService) {
         this.userDetailsService = userDetailsService;
         this.authenticationManager = authenticationManager;
+        this.userService = userService;
     }
 
     @GetMapping("/auth")
     @ResponseBody
     public Result auth() {
-        return new Result("ok", "用户没有登录", false);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        if (username.contains("anonymous")) {
+            return new Result("ok", "用户未登录", false);
+        } else {
+            User loginUser = userService.getUserByUsername(username);
+            return new Result("ok", "用户登录成功", true, loginUser);
+        }
     }
 
     // 接口返回格式
@@ -76,18 +88,20 @@ public class AuthController {
         String username = param.get("username");
         String password = param.get("password");
 
-        UserDetails userDetails = null;
+        UserDetails userDetails;
         try {
              userDetails = userDetailsService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
-            return new Result("fail", "密码不正确", false);
+            return new Result("fail", "用户名不存在", false);
         }
 
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
 
         try {
             authenticationManager.authenticate(token);
+            // 把用户信息保存在 session 中
             SecurityContextHolder.getContext().setAuthentication(token);
+
             User loginUser = new User(1, "张三");
             return new Result("ok", "登录成功", true, loginUser);
         } catch (BadCredentialsException e) {
