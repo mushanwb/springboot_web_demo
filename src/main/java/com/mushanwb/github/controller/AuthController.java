@@ -5,6 +5,7 @@ import com.mushanwb.github.service.UserService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -133,6 +134,22 @@ public class AuthController {
         userService.save(username, password);
 
         return new Result("ok", "success", false);
+    }
+
+    @GetMapping("/auth/logout")
+    @ResponseBody
+    public Result logout() {
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userService.getUserByUsername(username);
+
+        if (user == null) {
+            return new Result("fail", "用户没有登录", false);
+        } else {
+            SecurityContextHolder.clearContext();
+            return new Result("ok", "注销成功", false);
+        }
     }
 
 }
