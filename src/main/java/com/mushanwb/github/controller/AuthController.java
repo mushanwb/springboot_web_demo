@@ -1,14 +1,14 @@
 package com.mushanwb.github.controller;
 
+import com.mushanwb.github.entity.Result;
 import com.mushanwb.github.entity.User;
 import com.mushanwb.github.service.UserService;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,45 +38,10 @@ public class AuthController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
         if (username.contains("anonymous")) {
-            return new Result("ok", "用户未登录", false);
+            return Result.failure("用户未登录");
         } else {
             User loginUser = userService.getUserByUsername(username);
-            return new Result("ok", "用户登录成功", true, loginUser);
-        }
-    }
-
-    // 接口返回格式
-    private static class Result {
-        String status;
-        String msg;
-        boolean isLogin;
-        Object data;
-
-        public Result(String status, String msg, boolean isLogin) {
-            this(status, msg, isLogin, null);
-        }
-
-        public Result(String status, String msg, boolean isLogin, Object data) {
-            this.status = status;
-            this.msg = msg;
-            this.isLogin = isLogin;
-            this.data = data;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public String getMsg() {
-            return msg;
-        }
-
-        public boolean isLogin() {
-            return isLogin;
-        }
-
-        public Object getData() {
-            return data;
+            return Result.success("登录成功", loginUser);
         }
     }
 
@@ -90,7 +55,7 @@ public class AuthController {
         try {
              userDetails = userService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
-            return new Result("fail", "用户名不存在", false);
+            return Result.failure("用户名不存在");
         }
 
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
@@ -101,9 +66,9 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(token);
 
             User loginUser = userService.getUserByUsername(username);
-            return new Result("ok", "登录成功", true, loginUser);
+            return Result.success("登录成功", loginUser);
         } catch (BadCredentialsException e) {
-            return new Result("ok", "密码不正确", false);
+            return Result.failure("用户名不正确");
         }
     }
 
@@ -114,26 +79,26 @@ public class AuthController {
         String password = param.get("password");
 
         if (username == null || password == null) {
-            return new Result("fail", "username/password == null", false);
+            return Result.failure("username/password == null");
         }
 
         if (username.length() <= 1 || username.length() > 15) {
-            return new Result("fail", "invalid username", false);
+            return Result.failure("invalid username");
         }
 
         if (password.length() < 6 || password.length() > 16) {
-            return new Result("fail", "invalid password", false);
+            return Result.failure("invalid password");
         }
 
-        User user = userService.getUserByUsername(username);
-
-        if (user != null) {
-            return new Result("fail", "username is use", false);
+        // 将数据库用户名字段更改为唯一索引
+        try {
+            userService.save(username, password);
+        } catch (DuplicateKeyException e) {
+            e.printStackTrace();
+            return Result.failure("username is use");
         }
 
-        userService.save(username, password);
-
-        return new Result("ok", "success", false);
+        return Result.success("success", null);
     }
 
     @GetMapping("/auth/logout")
@@ -145,10 +110,10 @@ public class AuthController {
         User user = userService.getUserByUsername(username);
 
         if (user == null) {
-            return new Result("fail", "用户没有登录", false);
+            return Result.failure("用户没有登录");
         } else {
             SecurityContextHolder.clearContext();
-            return new Result("ok", "注销成功", false);
+            return Result.success("注销成功", null);
         }
     }
 
