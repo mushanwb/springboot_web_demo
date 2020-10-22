@@ -7,6 +7,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,13 +36,14 @@ public class AuthController {
     @GetMapping("/auth")
     @ResponseBody
     public Result auth() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (username.contains("anonymous")) {
+        User user = userService.getUserByUsername(authentication == null ? null : authentication.getName());
+
+        if (user == null) {
             return Result.failure("用户未登录");
         } else {
-            User loginUser = userService.getUserByUsername(username);
-            return Result.success("登录成功", loginUser);
+            return Result.success("登录成功", user);
         }
     }
 
