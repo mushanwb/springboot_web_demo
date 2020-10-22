@@ -13,9 +13,10 @@ public class User {
     private Instant createdAt;
     private Instant updatedAt;
 
-    public User(Integer id, String username) {
+    public User(Integer id, String username, String encryptPassword) {
         this.id = id;
         this.username = username;
+        this.encryptPassword = encryptPassword;
         this.avatar = "https://offerhkok.oss-cn-shenzhen.aliyuncs.com/service_table/8462020-07-17-05-58-24.png";
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
