@@ -99,11 +99,40 @@ public class AuthController {
             // 把用户信息保存在 session 中
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            User loginUser = new User(1, "张三");
+            User loginUser = userService.getUserByUsername(username);
             return new Result("ok", "登录成功", true, loginUser);
         } catch (BadCredentialsException e) {
             return new Result("ok", "密码不正确", false);
         }
+    }
+
+    @PostMapping("/auth/register")
+    @ResponseBody
+    public Result register(@RequestBody Map<String, String> param) {
+        String username = param.get("username");
+        String password = param.get("password");
+
+        if (username == null || password == null) {
+            return new Result("fail", "username/password == null", false);
+        }
+
+        if (username.length() <= 1 || username.length() > 15) {
+            return new Result("fail", "invalid username", false);
+        }
+
+        if (password.length() < 6 || password.length() > 16) {
+            return new Result("fail", "invalid password", false);
+        }
+
+        User user = userService.getUserByUsername(username);
+
+        if (user != null) {
+            return new Result("fail", "username is use", false);
+        }
+
+        userService.save(username, password);
+
+        return new Result("ok", "success", false);
     }
 
 }
